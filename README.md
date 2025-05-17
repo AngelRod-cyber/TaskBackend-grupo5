@@ -1,8 +1,8 @@
 # Task Manager Backend
 
-Este proyecto es el backend del sistema de gestión de tareas, construido con Spring Boot. Proporciona una API REST segura para manejar autenticación de usuarios y operaciones CRUD sobre tareas.
+Este proyecto es el backend del sistema **Task Manager**, construido con Spring Boot. Proporciona una API REST segura para manejar autenticación de usuarios y operaciones CRUD sobre tareas.
 
-## Tecnologías Utilizadas
+## 🚀 Tecnologías Utilizadas
 
 * Java 17
 * Spring Boot
@@ -12,7 +12,7 @@ Este proyecto es el backend del sistema de gestión de tareas, construido con Sp
 * PostgreSQL (o base de datos relacional compatible)
 * Docker / Docker Compose
 
-## Estructura del Proyecto
+## 🧱 Estructura del Proyecto
 
 ```
 src/main/java/com/kata/tareas/gestiondetareas
@@ -66,7 +66,7 @@ spring.datasource.password=contraseña
 jwt.secret=secreto_personalizado
 ```
 
-## Docker
+## 🐳 Docker
 
 Para levantar el backend junto con la base de datos:
 
@@ -76,7 +76,7 @@ docker-compose up --build
 
 Esto usará `Dockerfile` y `docker-compose.yml` para iniciar la aplicación y PostgreSQL.
 
-## Pruebas
+## 🧪 Pruebas
 
 El proyecto incluye pruebas unitarias para el controlador y el servicio de tareas en `src/test/java/...`.
 
