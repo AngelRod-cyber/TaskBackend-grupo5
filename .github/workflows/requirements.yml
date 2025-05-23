@@ -19,49 +19,69 @@ jobs:
   build-test-analyze-deploy:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:14
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: taskmanagerdb
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: root
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up JDK 21
-      uses: actions/setup-java@v3
-      with:
-        java-version: '21'
-        distribution: 'temurin'
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
 
-    - name: Cache Maven packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-maven
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven
 
-    - name: Build & test with Maven
-      run: mvn clean verify
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          echo "Waiting for PostgreSQL to be ready..."
+          sleep 15
 
-    - name: SonarCloud Scan
-      uses: SonarSource/sonarcloud-github-action@v2
-      with:
-        projectBaseDir: .
-      env:
-        SONAR_TOKEN:      ${{ secrets.SONAR_TOKEN }}
-        SONAR_PROJECT_KEY: angelrod-cyber   # cámbialo
-        SONAR_ORGANIZATION: AngelRod-cyber              # cámbialo
+      - name: Build & test with Maven
+        run: mvn clean verify
 
-    - name: Build Docker image
-      run: |
-        docker build -t ${{ inputs.dockerhub-repo }}:latest .
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          projectBaseDir: .
+        env:
+          SONAR_TOKEN:      ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: angelrod-cyber   # cámbialo
+          SONAR_ORGANIZATION: AngelRod-cyber              # cámbialo
 
-    - name: Scan Docker image with Trivy
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: ${{ inputs.dockerhub-repo }}:latest
-        format: 'table'
-        exit-code: '0'          # no rompe el pipeline; cámbialo a '1' si quieres fallar ante vulns
-        ignore-unfixed: true
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ inputs.dockerhub-repo }}:latest .
 
-    - name: DockerHub Login
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ inputs.dockerhub-repo }}:latest
+          format: 'table'
+          exit-code: '0'          # no rompe el pipeline; cámbialo a '1' si quieres fallar ante vulns
+          ignore-unfixed: true
 
-    - name: Push image to DockerHub
-      run: docker push ${{ inputs.dockerhub-repo }}:latest
+      - name: DockerHub Login
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Push image to DockerHub
+        run: docker push ${{ inputs.dockerhub-repo }}:latest
