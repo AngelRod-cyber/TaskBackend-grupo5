@@ -1,21 +1,20 @@
 package com.kata.tareas.gestiondetareas.service;
 
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
 import com.kata.tareas.gestiondetareas.dto.TaskDTO;
 import com.kata.tareas.gestiondetareas.exception.TaskNotFoundException;
 import com.kata.tareas.gestiondetareas.model.Task;
+import com.kata.tareas.gestiondetareas.model.User;
 import com.kata.tareas.gestiondetareas.repository.TaskRepository;
+import com.kata.tareas.gestiondetareas.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.*;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class TaskServiceTest {
@@ -23,61 +22,94 @@ class TaskServiceTest {
     @Mock
     private TaskRepository taskRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private TaskService taskService;
+
+    private User user;
+    private Task task;
+    private TaskDTO taskDTO;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        user = new User();
+        user.setId(1L);
+
+        task = new Task(1L, "Tarea de prueba", "Descripción", false, user);
+        taskDTO = new TaskDTO(1L, "Tarea de prueba", "Descripción", false, 1L);
     }
 
     @Test
     void testCreateTask() {
-        TaskDTO taskDTO = new TaskDTO(null, "Test Task", "Description", false, null);
-        Task savedTask = new Task(1L, "Test Task", "Description", false, null);
-
-        when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(taskRepository.save(any(Task.class))).thenReturn(task);
 
         TaskDTO result = taskService.createTask(taskDTO);
 
-        assertNotNull(result);
-        assertEquals("Test Task", result.getTitle());
-        assertEquals("Description", result.getDescription());
+        assertEquals(taskDTO.getTitle(), result.getTitle());
+        verify(taskRepository).save(any(Task.class));
     }
 
     @Test
-    void testGetAllTasks() {
-        Task task1 = new Task(1L, "Task 1", "Description 1", false, null);
-        Task task2 = new Task(2L, "Task 2", "Description 2", true, null);
+    void testGetTasksByUserId() {
+        when(taskRepository.findByUserId(1L)).thenReturn(Arrays.asList(task));
 
-        when(taskRepository.findAll()).thenReturn(List.of(task1, task2));
+        List<TaskDTO> tasks = taskService.getTasksByUserId(1L);
 
-        List<TaskDTO> tasks = taskService.getTasksByUserId(task1.getUser().getId());
-
-        assertEquals(2, tasks.size());
-        assertEquals("Task 1", tasks.get(0).getTitle());
-        assertEquals("Task 2", tasks.get(1).getTitle());
+        assertEquals(1, tasks.size());
+        assertEquals("Tarea de prueba", tasks.get(0).getTitle());
+        verify(taskRepository).findByUserId(1L);
     }
 
     @Test
-    void testDeleteTaskById_TaskExists() {
-        Long taskId = 1L;
+    void testUpdateTask_Success() {
+        TaskDTO updatedDTO = new TaskDTO(1L, "Actualizada", "Desc actualizada", true, 1L);
 
-        when(taskRepository.existsById(taskId)).thenReturn(true);
-        doNothing().when(taskRepository).deleteById(taskId);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(taskRepository.save(any(Task.class))).thenReturn(task);
 
-        assertDoesNotThrow(() -> taskService.deleteTaskById(taskId));
+        TaskDTO result = taskService.updateTask(1L, updatedDTO);
 
-        verify(taskRepository, times(1)).deleteById(taskId);
+        assertEquals("Actualizada", result.getTitle());
+        assertTrue(result.isCompleted());
+        verify(taskRepository).save(any(Task.class));
     }
 
     @Test
-    void testDeleteTaskById_TaskDoesNotExist() {
-        Long taskId = 1L;
+    void testUpdateTask_NotFound() {
+        when(taskRepository.findById(999L)).thenReturn(Optional.empty());
 
-        when(taskRepository.existsById(taskId)).thenReturn(false);
+        TaskDTO dto = new TaskDTO(999L, "Test", "Desc", false, 1L);
 
-        assertThrows(TaskNotFoundException.class, () -> taskService.deleteTaskById(taskId));
+        assertThrows(TaskNotFoundException.class, () -> taskService.updateTask(999L, dto));
+    }
+
+    @Test
+    void testDeleteTask_Success() {
+        when(taskRepository.existsById(1L)).thenReturn(true);
+
+        taskService.deleteTaskById(1L);
+
+        verify(taskRepository).deleteById(1L);
+    }
+
+    @Test
+    void testDeleteTask_NotFound() {
+        when(taskRepository.existsById(999L)).thenReturn(false);
+
+        assertThrows(TaskNotFoundException.class, () -> taskService.deleteTaskById(999L));
+    }
+
+    @Test
+    void testCreateTask_UserNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> taskService.createTask(taskDTO));
+        assertEquals("Usuario no encontrado con ID: 1", exception.getMessage());
     }
 }
-

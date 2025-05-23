@@ -1,92 +1,87 @@
 package com.kata.tareas.gestiondetareas.controllers;
 
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kata.tareas.gestiondetareas.dto.TaskDTO;
-import com.kata.tareas.gestiondetareas.exception.TaskNotFoundException;
 import com.kata.tareas.gestiondetareas.service.TaskService;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import org.mockito.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
+import java.util.Arrays;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@WebMvcTest(TaskController.class)
 class TaskControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @InjectMocks
+    private TaskController taskController;
 
-    @MockBean
+    @Mock
     private TaskService taskService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private TaskDTO sampleTask;
 
-    @Test
-    void testCreateTask() throws Exception {
-        TaskDTO taskDTO = new TaskDTO(null, "Test Task", "Description", false, 10L); // userId añadido
-        TaskDTO createdTask = new TaskDTO(1L, "Test Task", "Description", false, 10L);
-
-        when(taskService.createTask(any(TaskDTO.class))).thenReturn(createdTask);
-
-        mockMvc.perform(post("/api/tasks")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(taskDTO)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.title").value("Test Task"))
-                .andExpect(jsonPath("$.userId").value(10));
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        sampleTask = new TaskDTO();
+        sampleTask.setId(1L);
+        sampleTask.setTitle("Test Task");
+        sampleTask.setDescription("This is a test task.");
+        sampleTask.setUserId(100L);
     }
 
     @Test
-    void testGetAllTasks() throws Exception {
-        TaskDTO task1 = new TaskDTO(1L, "Task 1", "Description 1", false, 10L);
-        TaskDTO task2 = new TaskDTO(2L, "Task 2", "Description 2", true, 10L);
+    void testCreateTask() {
+        when(taskService.createTask(any(TaskDTO.class))).thenReturn(sampleTask);
 
-        when(taskService.getTasksByUserId(task1.getUserId())).thenReturn(List.of(task1, task2));
+        ResponseEntity<TaskDTO> response = taskController.createTask(sampleTask);
 
-        mockMvc.perform(get("/api/tasks"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].title").value("Task 1"))
-                .andExpect(jsonPath("$[1].title").value("Task 2"));
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(sampleTask, response.getBody());
+        verify(taskService, times(1)).createTask(sampleTask);
     }
 
     @Test
-    void testDeleteTask_Success() throws Exception {
-        Long taskId = 1L;
+    void testGetAllTasks() {
+        List<TaskDTO> tasks = Arrays.asList(sampleTask);
+        when(taskService.getTasksByUserId(100L)).thenReturn(tasks);
 
-        // No exception expected
-        doNothing().when(taskService).deleteTaskById(taskId);
+        ResponseEntity<List<TaskDTO>> response = taskController.getAllTasks(100L);
 
-        mockMvc.perform(delete("/api/tasks/{id}", taskId))
-                .andExpect(status().isNoContent());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(tasks, response.getBody());
+        verify(taskService, times(1)).getTasksByUserId(100L);
     }
 
     @Test
-    void testDeleteTask_NotFound() throws Exception {
-        Long taskId = 1L;
+    void testUpdateTask() {
+        TaskDTO updatedTask = new TaskDTO();
+        updatedTask.setId(1L);
+        updatedTask.setTitle("Updated Task");
+        updatedTask.setDescription("Updated description");
+        updatedTask.setUserId(100L);
 
-        doThrow(new TaskNotFoundException(taskId)).when(taskService).deleteTaskById(taskId);
+        when(taskService.updateTask(eq(1L), any(TaskDTO.class))).thenReturn(updatedTask);
 
-        mockMvc.perform(delete("/api/tasks/{id}", taskId))
-                .andExpect(status().isNotFound())
-                .andExpect(content().string("Task with ID 1 not found."));
+        ResponseEntity<TaskDTO> response = taskController.updateTask(1L, updatedTask);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(updatedTask, response.getBody());
+        verify(taskService, times(1)).updateTask(1L, updatedTask);
+    }
+
+    @Test
+    void testDeleteTask() {
+        doNothing().when(taskService).deleteTaskById(1L);
+
+        ResponseEntity<String> response = taskController.deleteTask(1L);
+
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+        assertEquals("Task deleted successfully!", response.getBody());
+        verify(taskService, times(1)).deleteTaskById(1L);
     }
 }
-
-
