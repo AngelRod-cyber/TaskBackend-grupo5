@@ -1,0 +1,15 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  reuse-workflow:
+    uses: ./.github/workflows/requirements.yml
+    with:
+      dockerhub-repo: zanemasters98/gestiondetareasback   # cámbialo a tu repo real
+    secrets:
+      SONAR_TOKEN:    ${{ secrets.SONAR_TOKEN }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
