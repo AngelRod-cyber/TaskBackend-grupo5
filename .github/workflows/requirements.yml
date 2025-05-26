@@ -61,6 +61,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+      - name: Wait for PostgreSQL
+        run: sleep 15
 
       - name: Build and run tests
         run: mvn clean verify
