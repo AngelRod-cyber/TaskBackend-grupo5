@@ -91,9 +91,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-target
+          path: .
 
       - name: SonarQube analysis with Maven
-        run: mvn sonar:sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.projectKey=AngelRod-cyber_TaskBackend-grupo5 -Dsonar.organization=angelrod-cyber -Dsonar.host.url=https://sonarcloud.io -Dsonar.java.binaries=target/classes/com/kata/tareas/gestiondetareas
+        run: mvn sonar:sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.projectKey=AngelRod-cyber_TaskBackend-grupo5 -Dsonar.organization=angelrod-cyber -Dsonar.host.url=https://sonarcloud.io -Dsonar.java.binaries=target/classes
 
   docker-build:
     name: 🐳 Build Docker Image
