@@ -88,14 +88,19 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
+      - name: Cache Maven packages
+        uses: actions/cache@v3
         with:
-          projectBaseDir: .
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_PROJECT_KEY: AngelRod-cyber_TaskBackend-grupo5   
-          SONAR_ORGANIZATION: angelrod-cyber                   
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven
+
+      - name: Build and analyze with SonarCloud (Maven)
+        run: mvn clean verify sonar:sonar \
+            -Dsonar.projectKey=AngelRod-cyber_TaskBackend-grupo5 \
+            -Dsonar.organization=angelrod-cyber \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}                 
 
   docker-build:
     name: 🐳 Build Docker Image
