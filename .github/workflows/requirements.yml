@@ -128,13 +128,7 @@ jobs:
 
       - name: Scan Docker image with Trivy and generate HTML report
         run: |
-          ./bin/trivy image --format html --output trivy-report.html ${{ inputs.dockerhub-repo }}:latest || true
-
-      - name: Upload Trivy HTML report
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-report
-          path: trivy-report.html
+          ./bin/trivy image --format table ${{ inputs.dockerhub-repo }}:latest || true
 
       - name: Push image to DockerHub
         run: docker push ${{ inputs.dockerhub-repo }}:latest
