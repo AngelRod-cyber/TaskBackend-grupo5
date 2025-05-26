@@ -92,6 +92,12 @@ jobs:
         with:
           name: build-target
           path: .
+      - name: Debug files after download
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "Listing all files:"
+          ls -R
 
       - name: SonarQube analysis with Maven
         run: mvn sonar:sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.projectKey=AngelRod-cyber_TaskBackend-grupo5 -Dsonar.organization=angelrod-cyber -Dsonar.host.url=https://sonarcloud.io -Dsonar.java.binaries=target/classes
