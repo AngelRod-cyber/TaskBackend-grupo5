@@ -100,7 +100,7 @@ jobs:
           ls -R
 
       - name: SonarQube analysis with Maven
-        run: mvn sonar:sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.projectKey=AngelRod-cyber_TaskBackend-grupo5 -Dsonar.organization=angelrod-cyber -Dsonar.host.url=https://sonarcloud.io -Dsonar.java.binaries=target/classes
+        run: mvn sonar:sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.projectKey=AngelRod-cyber_TaskBackend-grupo5 -Dsonar.organization=angelrod-cyber -Dsonar.host.url=https://sonarcloud.io -Dsonar.java.binaries=classes
 
   docker-build:
     name: 🐳 Build Docker Image
