@@ -125,7 +125,7 @@ jobs:
       - name: Scan Docker image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: gestiondetareasback:latest
+          image-ref: zanemasters98/gestiondetareasback:latest
           format: 'table'
           exit-code: '0'
           ignore-unfixed: true
