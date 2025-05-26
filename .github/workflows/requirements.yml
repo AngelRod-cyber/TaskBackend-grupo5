@@ -124,6 +124,16 @@ jobs:
           format: 'table'
           exit-code: '0'
           ignore-unfixed: true
+      
+      - name: Scan Docker image with Trivy (JSON format)
+        run: |
+          trivy image --format json --output trivy-report.json ${{ inputs.dockerhub-repo }}:latest
+
+      - name: Upload Trivy JSON report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.json      
 
   docker-push:
     name: 🚀 Push to DockerHub
