@@ -92,8 +92,8 @@ jobs:
         with:
           name: build-target
 
-      - name: Run SonarCloud analysis
-        run: mvn sonar:sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+      - name: SonarQube analysis with Maven
+        run: mvn sonar:sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.projectKey=AngelRod-cyber_TaskBackend-grupo5 -Dsonar.organization=angelrod-cyber -Dsonar.host.url=https://sonarcloud.io
 
   docker-build:
     name: 🐳 Build Docker Image
